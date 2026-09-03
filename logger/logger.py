@@ -6,6 +6,7 @@ Una sola pasada: lee, calcula, escribe y termina. De repetirla cada
 
 import json
 import csv
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -15,6 +16,7 @@ from dewpoint import dew_point
 
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+REPO_DIR = Path(__file__).resolve().parent.parent
 
 
 def main():
@@ -62,6 +64,17 @@ def main():
         ])
 
     print(datos)
+
+    # Subir automáticamente a GitHub usando SSH Deploy Key
+    try:
+        subprocess.run(["git", "add", "data/"], cwd=REPO_DIR, check=True, capture_output=True)
+        # Si no hay cambios, commit fallará pero no pasa nada
+        res = subprocess.run(["git", "commit", "-m", f"Auto-update: {momento_iso}"], cwd=REPO_DIR, capture_output=True)
+        if res.returncode == 0:
+            subprocess.run(["git", "push", "origin", "main"], cwd=REPO_DIR, check=True, capture_output=True)
+            print("Datos subidos a GitHub correctamente.")
+    except Exception as e:
+        print(f"No se pudo subir a GitHub: {e}")
 
 
 if __name__ == "__main__":
