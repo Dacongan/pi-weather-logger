@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=oneshot
-User=pi
-WorkingDirectory=/home/pi/pi-weather-logger/logger
+User=david
+WorkingDirectory=/home/david/pi-weather-logger/logger
 # Asegúrate de ajustar la ruta al ejecutable de Python o al entorno virtual si usas uno
 ExecStart=/usr/bin/python3 logger.py
