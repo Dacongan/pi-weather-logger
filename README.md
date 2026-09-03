@@ -69,4 +69,12 @@ Enabling I2C by hand in `config.txt` loads the controller but not the
 with `No such file or directory`. `raspi-config nonint do_i2c 0` does
 both halves; it appends `i2c-dev` to `/etc/modules`.
 
-Next: read both sensors from Python, then the logger and the CSV format.
+## Final Software Architecture
+
+**1. Python Logger:** `logger.py` runs on a 15-minute `systemd` timer (`logger.timer`). It reads temperature and humidity from the AHT20 and pressure from the BMP280 via `smbus2`, calculates the dew point, and appends the data to a daily CSV (e.g. `data/YYYY-MM-DD.csv`), plus a `data/latest.json` file for quick access.
+
+**2. Git Automation:** After writing the data, `logger.py` executes a `subprocess` to `git add`, `git commit`, and `git push` directly to GitHub using a passwordless SSH deploy key.
+
+**3. Web UI:** A static page at `web/index.html` is hosted by GitHub Pages. It fetches `data/latest.json` to display the current weather metrics on dark-mode CSS cards, and parses the daily `.csv` file with Chart.js to plot the temperature and dew point trends over the day.
+
+**Status:** Project completed and fully operational.

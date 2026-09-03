@@ -13,4 +13,4 @@ Milestones, in order:
 
 Datasheets: *AHT20 datasheet*, *BST-BMP280-DS001*.
 
-Deliberately empty — this code is the point of the project.
+Completed. `logger.py` successfully reads the AHT20 and the BMP280 (including full datasheet compensation formulas), calculates the dew point, logs to CSV/JSON, and auto-pushes to GitHub.
