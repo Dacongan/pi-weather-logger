@@ -129,6 +129,7 @@
   }
   .stale { color: var(--accent) !important; }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 <main>
@@ -159,6 +160,10 @@
         <p class="value"><span id="dew">–</span><span class="unit"> °C</span></p>
         <p class="margin-note" id="margin"></p>
       </div>
+    </div>
+
+    <div class="card" style="margin-top: 0.75rem; padding-top: 0.5rem; padding-bottom: 0.5rem;">
+      <canvas id="historyChart" style="width: 100%; max-height: 250px;"></canvas>
     </div>
 
     <footer>
@@ -212,11 +217,101 @@ function pinta(d) {
   document.getElementById("error").style.display = "none";
 }
 
+
+let myChart = null;
+
+async function cargaGrafica() {
+  const dateStr = new Date().toISOString().split('T')[0];
+  const csvUrl = `../data/${dateStr}.csv?t=${Date.now()}`;
+  
+  try {
+    const res = await fetch(csvUrl, { cache: "no-store" });
+    if (!res.ok) return;
+    const text = await res.text();
+    
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return;
+    
+    // timestamp,temp_c,humidity_pct,pressure_hpa,dew_point_c
+    const times = [];
+    const temps = [];
+    const dews = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',');
+      if (cols.length >= 5) {
+        const d = new Date(cols[0]);
+        times.push(d.toLocaleTimeString("es-ES", {hour: "2-digit", minute: "2-digit"}));
+        temps.push(parseFloat(cols[1]));
+        dews.push(parseFloat(cols[4]));
+      }
+    }
+    
+    const ctx = document.getElementById('historyChart').getContext('2d');
+    const colorLine = getComputedStyle(document.documentElement).getPropertyValue('--line').trim();
+    const colorInk = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+    const colorAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    const colorCold = getComputedStyle(document.documentElement).getPropertyValue('--cold').trim();
+    
+    Chart.defaults.color = colorInk;
+    Chart.defaults.font.family = 'system-ui, sans-serif';
+    
+    if (myChart) {
+      myChart.data.labels = times;
+      myChart.data.datasets[0].data = temps;
+      myChart.data.datasets[1].data = dews;
+      myChart.update();
+    } else {
+      myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: times,
+          datasets: [
+            {
+              label: 'Temperatura (°C)',
+              data: temps,
+              borderColor: colorAccent,
+              backgroundColor: colorAccent,
+              tension: 0.3,
+              pointRadius: 0,
+              borderWidth: 2
+            },
+            {
+              label: 'Pto. Rocío (°C)',
+              data: dews,
+              borderColor: colorCold,
+              backgroundColor: colorCold,
+              tension: 0.3,
+              pointRadius: 0,
+              borderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { position: 'top', labels: { boxWidth: 12, usePointStyle: true } }
+          },
+          scales: {
+            x: { grid: { color: colorLine, drawBorder: false }, ticks: { maxTicksLimit: 6 } },
+            y: { grid: { color: colorLine, drawBorder: false } }
+          }
+        }
+      });
+    }
+  } catch (e) {
+    console.error("No se pudo cargar el CSV para la gráfica", e);
+  }
+}
+
 async function carga() {
   try {
     const r = await fetch(`${RUTA}?t=${Date.now()}`, { cache: "no-store" });
     if (!r.ok) throw new Error(r.status);
     pinta(await r.json());
+    cargaGrafica();
   } catch (e) {
     document.getElementById("error").style.display = "block";
     document.getElementById("panel").hidden = true;
