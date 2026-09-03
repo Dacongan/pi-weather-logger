@@ -1,6 +1,62 @@
+# ----------------------------------------------------------------------
+# AI Assistants & IDEs
+# ----------------------------------------------------------------------
+.claude/
+.gemini/
+.cursor/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ----------------------------------------------------------------------
+# Secrets, Passwords & Environment Variables
+# ----------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+secrets.json
+*.pem
+*.key
+credentials.json
+auth.json
+*.sqlite3
+*.db
+
+# ----------------------------------------------------------------------
+# Python
+# ----------------------------------------------------------------------
 __pycache__/
 *.py[cod]
+*$py.class
 .venv/
 venv/
+ENV/
+env.bak/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# ----------------------------------------------------------------------
+# OS generated files
+# ----------------------------------------------------------------------
 .DS_Store
-.env
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ----------------------------------------------------------------------
+# Logs & Data (Descomenta si no quieres subir tus datos CSV/JSON a git)
+# Nota: Si usas GitHub Pages para alojar web/index.html y quieres 
+# que muestre los datos, la carpeta data/ DEBE subirse, por lo que 
+# no la ignoramos por defecto.
+# ----------------------------------------------------------------------
+*.log
+# data/*.csv
+# data/*.json

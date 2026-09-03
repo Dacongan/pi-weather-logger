@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>weatherpi · Torre-Pacheco</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --ink: #16191d;
+    --muted: #6b7280;
+    --line: #e3e6ea;
+    --accent: #c2410c;
+    --cold: #0369a1;
+    --ok: #15803d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1115;
+      --card: #171a20;
+      --ink: #e8eaed;
+      --muted: #9aa1ab;
+      --line: #262b33;
+      --accent: #fb923c;
+      --cold: #7dd3fc;
+      --ok: #86efac;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 2rem 1rem 3rem;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 640px; margin: 0 auto; }
+
+  header { margin-bottom: 1.75rem; }
+  h1 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .sub { margin: 0.15rem 0 0; color: var(--muted); font-size: 0.875rem; }
+
+  .hero {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.75rem 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .temp {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .temp b {
+    font-size: clamp(3rem, 14vw, 4.5rem);
+    font-weight: 650;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .temp span { font-size: 1.5rem; color: var(--muted); font-weight: 500; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 1.1rem 1.25rem;
+  }
+  .label {
+    margin: 0 0 0.35rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  .value {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .unit { font-size: 1rem; color: var(--muted); font-weight: 500; }
+
+  .margin-note {
+    margin: 0.4rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+  .margin-note.warn { color: var(--accent); }
+  .margin-note.good { color: var(--ok); }
+
+  footer {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.8125rem;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    justify-content: space-between;
+  }
+  footer a { color: inherit; }
+
+  #error {
+    display: none;
+    background: var(--card);
+    border: 1px solid var(--accent);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    color: var(--accent);
+    font-size: 0.9375rem;
+  }
+  .stale { color: var(--accent) !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>weatherpi</h1>
+    <p class="sub">Torre-Pacheco · sensor AHT20 en Raspberry Pi</p>
+  </header>
+
+  <div id="error">No hay datos todavía. El fichero <code>data/latest.json</code> no se ha podido leer.</div>
+
+  <section id="panel" hidden>
+    <div class="hero">
+      <p class="label">Temperatura</p>
+      <p class="temp"><b id="temp">–</b><span>°C</span></p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <p class="label">Humedad relativa</p>
+        <p class="value"><span id="hum">–</span><span class="unit"> %</span></p>
+      </div>
+      <div class="card">
+        <p class="label">Presión atmosfèrica</p>
+        <p class="value"><span id="pres">–</span><span class="unit"> hPa</span></p>
+      </div>
+      <div class="card">
+        <p class="label">Punto de rocío</p>
+        <p class="value"><span id="dew">–</span><span class="unit"> °C</span></p>
+        <p class="margin-note" id="margin"></p>
+      </div>
+    </div>
+
+    <footer>
+      <span>Última lectura: <span id="when">–</span></span>
+      <span id="ago"></span>
+    </footer>
+  </section>
+</main>
+
+<script>
+const RUTA = "../data/latest.json";
+
+function fmtHora(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString("es-ES", {
+    day: "2-digit", month: "short",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function hace(iso) {
+  const min = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (min < 1) return "ahora mismo";
+  if (min === 1) return "hace 1 minuto";
+  if (min < 60) return `hace ${min} minutos`;
+  const h = Math.round(min / 60);
+  return h === 1 ? "hace 1 hora" : `hace ${h} horas`;
+}
+
+function pinta(d) {
+  document.getElementById("temp").textContent = d.temp_c.toFixed(1);
+  document.getElementById("hum").textContent  = d.humidity_pct.toFixed(1);
+  if (d.pressure_hpa !== undefined) {
+    document.getElementById("pres").textContent = d.pressure_hpa.toFixed(1);
+  }
+  document.getElementById("dew").textContent  = d.dew_point_c.toFixed(1);
+
+  const margen = d.temp_c - d.dew_point_c;
+  const nota = document.getElementById("margin");
+  nota.textContent = `${margen.toFixed(1)} °C por debajo del aire`;
+  nota.className = "margin-note " + (margen < 2 ? "warn" : "good");
+
+  document.getElementById("when").textContent = fmtHora(d.timestamp);
+
+  const ago = document.getElementById("ago");
+  ago.textContent = hace(d.timestamp);
+  const minutos = (Date.now() - new Date(d.timestamp)) / 60000;
+  ago.classList.toggle("stale", minutos > 20);
+
+  document.getElementById("panel").hidden = false;
+  document.getElementById("error").style.display = "none";
+}
+
+async function carga() {
+  try {
+    const r = await fetch(`${RUTA}?t=${Date.now()}`, { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    pinta(await r.json());
+  } catch (e) {
+    document.getElementById("error").style.display = "block";
+    document.getElementById("panel").hidden = true;
+  }
+}
+
+carga();
+setInterval(carga, 60000);
+</script>
+</body>
+</html>
