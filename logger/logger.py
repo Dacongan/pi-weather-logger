@@ -71,6 +71,7 @@ def main():
         # Si no hay cambios, commit fallará pero no pasa nada
         res = subprocess.run(["git", "commit", "-m", f"Auto-update: {momento_iso}"], cwd=REPO_DIR, capture_output=True)
         if res.returncode == 0:
+            subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=REPO_DIR, check=True, capture_output=True)
             subprocess.run(["git", "push", "origin", "main"], cwd=REPO_DIR, check=True, capture_output=True)
             print("Datos subidos a GitHub correctamente.")
     except Exception as e:
