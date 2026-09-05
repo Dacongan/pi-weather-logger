@@ -176,6 +176,7 @@
   }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 <main>
@@ -265,6 +266,37 @@
       <li style="margin-bottom: 0.5rem;"><b>VPD (Déficit de presión de vapor):</b> Mide literalmente la "sed" que tiene el aire. Es la métrica clave en botánica: si el VPD es muy alto, el aire roba agua rápidamente de las plantas y las seca. Si el VPD es muy bajo (cercano a 0), el aire ya está lleno de agua, por lo que las plantas no pueden transpirar ni absorber nutrientes por las raíces, frenando su crecimiento.</li>
       <li><b>Punto de Ebullición del Agua:</b> Temperatura exacta a la que herviría una olla de agua en este preciso momento en tu casa. El agua no siempre hierve a 100ºC; depende de la presión atmosférica, y este sensor la usa para darte el punto de ebullición exacto de hoy.</li>
     </ul>
+
+    <details style="margin-top: 1rem; margin-bottom: 2rem; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1rem 1.25rem;">
+      <summary style="font-weight: 600; cursor: pointer; font-size: 1rem; color: var(--ink);">📐 Fórmulas y Base Matemática (Ingeniería)</summary>
+      <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--muted); line-height: 1.6; padding-top: 1rem; border-top: 1px solid var(--line);">
+        <p>Las métricas presentadas en este panel no son meras estimaciones, sino que se calculan en tiempo real aplicando termodinámica y psicrometría. A continuación se documenta el rigor matemático detrás del código:</p>
+        
+        <h3 style="color: var(--ink); margin-top: 1.5rem; font-size: 0.9rem;">1. Presión de Vapor y VPD</h3>
+        <p>Utilizamos la fórmula empírica de <b>Magnus-Tetens</b> para calcular la presión de saturación de vapor (\(e_s\)) y la presión actual (\(e_a\)) en hPa:</p>
+        <p style="text-align: center;">$$e_s = 6.112 \cdot \exp\left(\frac{17.67 \cdot T}{T + 243.5}\right)$$</p>
+        <p style="text-align: center;">$$e_a = e_s \cdot \frac{RH}{100}$$</p>
+        <p>El Déficit de Presión de Vapor (VPD) es la diferencia entre ambas, convertida a kPa:</p>
+        <p style="text-align: center;">$$VPD = \frac{e_s - e_a}{10}$$</p>
+        <p><b>Por qué:</b> La ecuación de Tetens es el estándar meteorológico de la OMM para modelar la relación de Clausius-Clapeyron sin tener que resolver integrales complejas ni usar cálculos iterativos pesados en el navegador.</p>
+
+        <h3 style="color: var(--ink); margin-top: 1.5rem; font-size: 0.9rem;">2. Humedad Absoluta (AH)</h3>
+        <p style="text-align: center;">$$AH = \frac{2.16679 \cdot e_a \cdot 100}{T + 273.15} \quad [g/m^3]$$</p>
+        <p><b>Por qué:</b> Se deriva directamente de la <i>Ley de los Gases Ideales</i> (\(PV = nRT\)). Relaciona la presión parcial del vapor de agua con la masa física real del gas en un volumen dado, ajustando las unidades con la constante universal de los gases específicos para el vapor de agua (aproximadamente \(461.5 \, J/(kg\cdot K)\)).</p>
+
+        <h3 style="color: var(--ink); margin-top: 1.5rem; font-size: 0.9rem;">3. Temperatura de Bulbo Húmedo (Aproximación de Stull)</h3>
+        <p style="text-align: center;">$$T_{wb} = T \cdot \arctan(0.151977 \cdot \sqrt{RH + 8.313659}) + \arctan(T + RH) - \dots$$</p>
+        <p><b>Por qué:</b> Calcular el bulbo húmedo requiere resolver la ecuación psicrométrica, la cual no tiene solución algebraica directa. En lugar de usar métodos numéricos iterativos (como Newton-Raphson) que bloqueen el hilo de ejecución de JavaScript, implementamos la fórmula empírica de Roland Stull (2011), que ofrece una precisión de \(\pm 0.3^\circ C\) mediante análisis de regresión múltiple.</p>
+
+        <h3 style="color: var(--ink); margin-top: 1.5rem; font-size: 0.9rem;">4. Punto de Ebullición (Ecuación de Antoine)</h3>
+        <p style="text-align: center;">$$T_{boil} = \frac{1730.63}{8.07131 - \log_{10}(P_{mmHg})} - 233.426$$</p>
+        <p><b>Por qué:</b> La ebullición ocurre cuando la presión de vapor del líquido iguala la presión atmosférica del entorno. La Ecuación de Antoine modela esta curva de presión de vapor para el agua. Despejando la temperatura (\(T_{boil}\)) e inyectando la presión barométrica absoluta medida por el sensor BMP280, obtenemos el punto exacto termodinámico de ebullición local en tiempo real.</p>
+
+        <h3 style="color: var(--ink); margin-top: 1.5rem; font-size: 0.9rem;">5. Sensación Térmica (Apparent Temperature)</h3>
+        <p style="text-align: center;">$$AT = T + 0.33 \cdot e_a - 4.00$$</p>
+        <p><b>Por qué:</b> Implementación del estándar meteorológico de la <i>Australian Bureau of Meteorology (BOM)</i>. El coeficiente \(0.33\) modela matemáticamente la penalización de la humedad en la capacidad de la piel para disipar calor metabólico latente, mientras que \(-4.00\) normaliza la ecuación para un humano en condiciones estándar de viento calmado.</p>
+      </div>
+    </details>
 
     <footer>
       <span>Última lectura: <span id="when">–</span></span>
