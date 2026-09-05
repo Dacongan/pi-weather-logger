@@ -194,6 +194,11 @@
         <p class="value"><span id="dew">–</span><span class="unit"> °C</span></p>
         <p class="margin-note" id="margin"></p>
       </div>
+      <div class="card">
+        <p class="label">Base de nubes</p>
+        <p class="value"><span id="clouds">–</span><span class="unit"> m</span></p>
+        <p class="sub-value">Altura aprox. de condensación</p>
+      </div>
     </div>
 
     <div class="controls">
@@ -272,6 +277,11 @@ function analyzePressure(pressData, timesData) {
 
 function renderPressure() {
   let p = currentPressureHpa;
+  
+  // Ajuste a Nivel del Mar (Torre-Pacheco ~40m, a 15ºC promedio la corrección es ~4.7 hPa)
+  // Fórmula simplificada: 1 hPa por cada 8.3m
+  p = p + (40 / 8.3); 
+
   let u = 'hPa';
   if (pressureUnit === 'mmHg') {
     p = p * 0.750062;
@@ -305,6 +315,10 @@ function pinta(d) {
   const nota = document.getElementById("margin");
   nota.textContent = `${margen.toFixed(1)} °C por debajo del aire`;
   nota.className = "margin-note " + (margen < 2 ? "warn" : "good");
+
+  // Base de nubes (Cloud Base) - Fórmula: (T - Td) * 122 metros
+  const cloudBase = Math.max(0, margen * 122);
+  document.getElementById("clouds").textContent = cloudBase.toFixed(0);
 
   // Sensación térmica
   const at = calcApparentTemp(d.temp_c, d.humidity_pct);
