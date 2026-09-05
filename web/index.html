@@ -217,10 +217,23 @@
       <canvas id="presChart" style="width: 100%; max-height: 200px;"></canvas>
     </div>
 
-    <div class="card" style="margin-top: 0.75rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-size: 0.8125rem; color: var(--muted); padding: 0.75rem 1.25rem;">
-      <div><b>Bulbo Húmedo:</b> <span id="wet-bulb">–</span> °C</div>
-      <div><b>Hum. Absoluta:</b> <span id="abs-hum">–</span> g/m³</div>
-      <div><b>VPD:</b> <span id="vpd">–</span> kPa</div>
+    <h2 style="font-size: 1rem; margin-top: 2rem; margin-bottom: 0.75rem;">Termodinámica Avanzada</h2>
+    <div class="grid">
+      <div class="card">
+        <p class="label">Bulbo Húmedo</p>
+        <p class="value"><span id="wet-bulb">–</span><span class="unit"> °C</span></p>
+        <p class="sub-value" style="font-size: 0.75rem; margin-top: 0.5rem; line-height: 1.3;">Límite térmico del cuerpo humano para enfriarse sudando.</p>
+      </div>
+      <div class="card">
+        <p class="label">Hum. Absoluta</p>
+        <p class="value"><span id="abs-hum">–</span><span class="unit"> g/m³</span></p>
+        <p class="sub-value" style="font-size: 0.75rem; margin-top: 0.5rem; line-height: 1.3;">Peso exacto del agua física que hay flotando en el aire.</p>
+      </div>
+      <div class="card">
+        <p class="label">VPD</p>
+        <p class="value"><span id="vpd">–</span><span class="unit"> kPa</span></p>
+        <p class="sub-value" style="font-size: 0.75rem; margin-top: 0.5rem; line-height: 1.3;">"Sed" del aire. Clave en botánica para el riego de plantas.</p>
+      </div>
     </div>
 
     <footer>
