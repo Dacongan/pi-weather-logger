@@ -104,6 +104,13 @@
   }
   .margin-note.warn { color: var(--accent); }
   .margin-note.good { color: var(--ok); }
+  
+  .sub-value {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+  .pointer { cursor: pointer; user-select: none; }
 
   footer {
     margin-top: 1.5rem;
@@ -128,6 +135,30 @@
     font-size: 0.9375rem;
   }
   .stale { color: var(--accent) !important; }
+
+  .controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    background: var(--card);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn.active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -144,22 +175,31 @@
     <div class="hero">
       <p class="label">Temperatura</p>
       <p class="temp"><b id="temp">–</b><span>°C</span></p>
+      <div class="sub-value" id="temp-minmax"></div>
     </div>
 
     <div class="grid">
       <div class="card">
         <p class="label">Humedad relativa</p>
         <p class="value"><span id="hum">–</span><span class="unit"> %</span></p>
+        <div class="sub-value" id="heat-index"></div>
       </div>
-      <div class="card">
+      <div class="card pointer" id="pres-card" title="Click para cambiar unidad">
         <p class="label">Presión atmosfèrica</p>
-        <p class="value"><span id="pres">–</span><span class="unit"> hPa</span></p>
+        <p class="value"><span id="pres">–</span><span class="unit" id="pres-unit"> hPa</span></p>
+        <div class="sub-value" id="pressure-trend"></div>
       </div>
       <div class="card">
         <p class="label">Punto de rocío</p>
         <p class="value"><span id="dew">–</span><span class="unit"> °C</span></p>
         <p class="margin-note" id="margin"></p>
       </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn active" id="btn-24h">Últimas 24h</button>
+      <button class="btn" id="btn-7d">Últimos 7 días</button>
+      <input type="date" class="btn" id="date-picker">
     </div>
 
     <div class="card" style="margin-top: 0.75rem; padding-top: 0.5rem; padding-bottom: 0.5rem;">
@@ -182,12 +222,15 @@
 <script>
 const RUTA = "../data/latest.json";
 
+// State
+let currentView = '24h'; // '24h', '7d', 'custom'
+let customDateStr = '';
+let pressureUnit = 'hPa'; // hPa, mmHg, atm
+let currentPressureHpa = 0;
+
 function fmtHora(iso) {
   const d = new Date(iso);
-  return d.toLocaleString("es-ES", {
-    day: "2-digit", month: "short",
-    hour: "2-digit", minute: "2-digit",
-  });
+  return d.toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
 function hace(iso) {
@@ -199,11 +242,62 @@ function hace(iso) {
   return h === 1 ? "hace 1 hora" : `hace ${h} horas`;
 }
 
+// Fórmulas
+function calcApparentTemp(ta, rh) {
+  const e = (rh / 100) * 6.105 * Math.exp((17.27 * ta) / (237.7 + ta));
+  return ta + 0.33 * e - 4.00;
+}
+
+function analyzePressure(pressData, timesData) {
+  const now = new Date();
+  const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  
+  let oldP = null;
+  let newP = pressData[pressData.length - 1];
+  for (let i = timesData.length - 1; i >= 0; i--) {
+    if (timesData[i] <= threeHoursAgo) {
+      oldP = pressData[i];
+      break;
+    }
+  }
+  
+  if (oldP === null || newP === undefined) return "Recopilando tendencia...";
+  const diff = newP - oldP;
+  if (diff <= -2) return "↓ Bajando rápido 🌧 (Lluvia)";
+  if (diff <= -0.5) return "↘ Bajando ☁️ (Empeorando)";
+  if (diff >= 2) return "↑ Subiendo rápido ☀️ (Despejando)";
+  if (diff >= 0.5) return "↗ Subiendo 🌤 (Mejorando)";
+  return "→ Estable ⛅️";
+}
+
+function renderPressure() {
+  let p = currentPressureHpa;
+  let u = 'hPa';
+  if (pressureUnit === 'mmHg') {
+    p = p * 0.750062;
+    u = 'mmHg';
+  } else if (pressureUnit === 'atm') {
+    p = p / 1013.25;
+    u = 'atm';
+  }
+  document.getElementById("pres").textContent = (pressureUnit === 'atm') ? p.toFixed(3) : p.toFixed(1);
+  document.getElementById("pres-unit").textContent = ' ' + u;
+}
+
+document.getElementById('pres-card').addEventListener('click', () => {
+  if (pressureUnit === 'hPa') pressureUnit = 'mmHg';
+  else if (pressureUnit === 'mmHg') pressureUnit = 'atm';
+  else pressureUnit = 'hPa';
+  renderPressure();
+  cargaGrafica(); // Redibujar gráfica de presión con nuevas unidades
+});
+
 function pinta(d) {
   document.getElementById("temp").textContent = d.temp_c.toFixed(1);
   document.getElementById("hum").textContent  = d.humidity_pct.toFixed(1);
   if (d.pressure_hpa !== undefined) {
-    document.getElementById("pres").textContent = d.pressure_hpa.toFixed(1);
+    currentPressureHpa = d.pressure_hpa;
+    renderPressure();
   }
   document.getElementById("dew").textContent  = d.dew_point_c.toFixed(1);
 
@@ -211,6 +305,10 @@ function pinta(d) {
   const nota = document.getElementById("margin");
   nota.textContent = `${margen.toFixed(1)} °C por debajo del aire`;
   nota.className = "margin-note " + (margen < 2 ? "warn" : "good");
+
+  // Sensación térmica
+  const at = calcApparentTemp(d.temp_c, d.humidity_pct);
+  document.getElementById("heat-index").textContent = `Sensación: ${at.toFixed(1)} °C`;
 
   document.getElementById("when").textContent = fmtHora(d.timestamp);
 
@@ -223,128 +321,172 @@ function pinta(d) {
   document.getElementById("error").style.display = "none";
 }
 
-
 let tempChart = null;
 let humChart = null;
 let presChart = null;
 
-async function cargaGrafica() {
-  const dateStr = new Date().toISOString().split('T')[0];
-  const csvUrl = `../data/${dateStr}.csv?t=${Date.now()}`;
-  
+async function fetchCSV(dateStr) {
   try {
-    const res = await fetch(csvUrl, { cache: "no-store" });
-    if (!res.ok) return;
-    const text = await res.text();
-    
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) return;
-    
-    // timestamp,temp_c,humidity_pct,pressure_hpa,dew_point_c
-    const times = [];
-    const temps = [];
-    const hums = [];
-    const press = [];
-    const dews = [];
-    
-    for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(',');
-      if (cols.length >= 5) {
-        const d = new Date(cols[0]);
-        times.push(d.toLocaleTimeString("es-ES", {hour: "2-digit", minute: "2-digit"}));
-        temps.push(parseFloat(cols[1]));
-        hums.push(parseFloat(cols[2]));
-        const p = parseFloat(cols[3]);
-        if (!isNaN(p)) press.push(p);
-        dews.push(parseFloat(cols[4]));
-      }
-    }
-    
-    const colorLine = getComputedStyle(document.documentElement).getPropertyValue('--line').trim();
-    const colorInk = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
-    const colorAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-    const colorCold = getComputedStyle(document.documentElement).getPropertyValue('--cold').trim();
-    const colorOk = getComputedStyle(document.documentElement).getPropertyValue('--ok').trim();
-    
-    Chart.defaults.color = colorInk;
-    Chart.defaults.font.family = 'system-ui, sans-serif';
-    
-    const chartOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { position: 'top', labels: { boxWidth: 12, usePointStyle: true } }
-      },
-      scales: {
-        x: { grid: { color: colorLine, drawBorder: false }, ticks: { maxTicksLimit: 6 } },
-        y: { grid: { color: colorLine, drawBorder: false } }
-      }
-    };
-
-    // Temp Chart
-    if (tempChart) {
-      tempChart.data.labels = times;
-      tempChart.data.datasets[0].data = temps;
-      tempChart.data.datasets[1].data = dews;
-      tempChart.update();
-    } else {
-      const ctxTemp = document.getElementById('tempChart').getContext('2d');
-      tempChart = new Chart(ctxTemp, {
-        type: 'line',
-        data: {
-          labels: times,
-          datasets: [
-            { label: 'Temperatura (°C)', data: temps, borderColor: colorAccent, backgroundColor: colorAccent, tension: 0.3, pointRadius: 0, borderWidth: 2 },
-            { label: 'Pto. Rocío (°C)', data: dews, borderColor: colorCold, backgroundColor: colorCold, tension: 0.3, pointRadius: 0, borderWidth: 2 }
-          ]
-        },
-        options: chartOptions
-      });
-    }
-
-    // Humidity Chart
-    if (humChart) {
-      humChart.data.labels = times;
-      humChart.data.datasets[0].data = hums;
-      humChart.update();
-    } else {
-      const ctxHum = document.getElementById('humChart').getContext('2d');
-      humChart = new Chart(ctxHum, {
-        type: 'line',
-        data: {
-          labels: times,
-          datasets: [
-            { label: 'Humedad (%)', data: hums, borderColor: colorCold, backgroundColor: colorCold, tension: 0.3, pointRadius: 0, borderWidth: 2 }
-          ]
-        },
-        options: chartOptions
-      });
-    }
-
-    // Pressure Chart
-    if (presChart) {
-      presChart.data.labels = times;
-      presChart.data.datasets[0].data = press;
-      presChart.update();
-    } else {
-      const ctxPres = document.getElementById('presChart').getContext('2d');
-      presChart = new Chart(ctxPres, {
-        type: 'line',
-        data: {
-          labels: times,
-          datasets: [
-            { label: 'Presión (hPa)', data: press, borderColor: colorOk, backgroundColor: colorOk, tension: 0.3, pointRadius: 0, borderWidth: 2 }
-          ]
-        },
-        options: chartOptions
-      });
-    }
-    
-  } catch (e) {
-    console.error("No se pudo cargar el CSV para la gráfica", e);
-  }
+    const res = await fetch(`../data/${dateStr}.csv?t=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch (e) { return null; }
 }
+
+async function cargaGrafica() {
+  let datesToFetch = [];
+  let filterDate = null;
+  const now = new Date();
+
+  if (currentView === '24h') {
+    const today = now.toISOString().split('T')[0];
+    const yesterday = new Date(now.getTime() - 86400000).toISOString().split('T')[0];
+    datesToFetch = [yesterday, today];
+    filterDate = new Date(now.getTime() - 86400000); // 24h ago
+  } else if (currentView === '7d') {
+    for (let i = 6; i >= 0; i--) {
+      datesToFetch.push(new Date(now.getTime() - i * 86400000).toISOString().split('T')[0]);
+    }
+    filterDate = new Date(now.getTime() - 7 * 86400000);
+  } else if (currentView === 'custom') {
+    datesToFetch = [customDateStr];
+  }
+
+  let allLines = [];
+  for (const d of datesToFetch) {
+    const csv = await fetchCSV(d);
+    if (csv) {
+      allLines.push(...csv.trim().split('\n').slice(1));
+    }
+  }
+
+  const times = [], rawDates = [], temps = [], hums = [], press = [], dews = [];
+  
+  for (const line of allLines) {
+    const cols = line.split(',');
+    if (cols.length >= 5) {
+      const d = new Date(cols[0]);
+      if (filterDate && d < filterDate) continue;
+      
+      rawDates.push(d);
+      if (currentView === '24h') {
+        times.push(d.toLocaleTimeString("es-ES", {hour: "2-digit", minute: "2-digit"}));
+      } else {
+        times.push(d.toLocaleTimeString("es-ES", {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"}));
+      }
+      
+      temps.push(parseFloat(cols[1]));
+      hums.push(parseFloat(cols[2]));
+      
+      let p = parseFloat(cols[3]);
+      if (!isNaN(p)) {
+        if (pressureUnit === 'mmHg') p = p * 0.750062;
+        else if (pressureUnit === 'atm') p = p / 1013.25;
+        press.push(p);
+      }
+      dews.push(parseFloat(cols[4]));
+    }
+  }
+
+  // Max / Min
+  if (temps.length > 0) {
+    const maxT = Math.max(...temps);
+    const minT = Math.min(...temps);
+    document.getElementById("temp-minmax").textContent = `↑ ${maxT.toFixed(1)}° | ↓ ${minT.toFixed(1)}°`;
+  }
+
+  // Trend
+  if (currentView === '24h' || (currentView === 'custom' && customDateStr === now.toISOString().split('T')[0])) {
+    document.getElementById("pressure-trend").textContent = analyzePressure(press, rawDates);
+  }
+
+  const colorLine = getComputedStyle(document.documentElement).getPropertyValue('--line').trim();
+  const colorInk = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+  const colorAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  const colorCold = getComputedStyle(document.documentElement).getPropertyValue('--cold').trim();
+  const colorOk = getComputedStyle(document.documentElement).getPropertyValue('--ok').trim();
+  
+  Chart.defaults.color = colorInk;
+  Chart.defaults.font.family = 'system-ui, sans-serif';
+  
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { position: 'top', labels: { boxWidth: 12, usePointStyle: true } }, tooltip: { enabled: true } },
+    scales: {
+      x: { grid: { color: colorLine, drawBorder: false }, ticks: { maxTicksLimit: (currentView==='7d'? 14 : 6) } },
+      y: { grid: { color: colorLine, drawBorder: false } }
+    },
+    animation: { duration: 0 } // faster redraws
+  };
+
+  if (tempChart) { tempChart.destroy(); }
+  const ctxTemp = document.getElementById('tempChart').getContext('2d');
+  tempChart = new Chart(ctxTemp, {
+    type: 'line',
+    data: {
+      labels: times,
+      datasets: [
+        { label: 'Temperatura (°C)', data: temps, borderColor: colorAccent, backgroundColor: colorAccent, tension: 0.3, pointRadius: 0, borderWidth: 2 },
+        { label: 'Pto. Rocío (°C)', data: dews, borderColor: colorCold, backgroundColor: colorCold, tension: 0.3, pointRadius: 0, borderWidth: 2 }
+      ]
+    },
+    options: chartOptions
+  });
+
+  if (humChart) { humChart.destroy(); }
+  const ctxHum = document.getElementById('humChart').getContext('2d');
+  humChart = new Chart(ctxHum, {
+    type: 'line',
+    data: {
+      labels: times,
+      datasets: [{ label: 'Humedad (%)', data: hums, borderColor: colorCold, backgroundColor: colorCold, tension: 0.3, pointRadius: 0, borderWidth: 2 }]
+    },
+    options: chartOptions
+  });
+
+  if (presChart) { presChart.destroy(); }
+  const ctxPres = document.getElementById('presChart').getContext('2d');
+  presChart = new Chart(ctxPres, {
+    type: 'line',
+    data: {
+      labels: times,
+      datasets: [{ label: `Presión (${pressureUnit})`, data: press, borderColor: colorOk, backgroundColor: colorOk, tension: 0.3, pointRadius: 0, borderWidth: 2 }]
+    },
+    options: chartOptions
+  });
+}
+
+// UI events
+document.getElementById('btn-24h').addEventListener('click', (e) => {
+  currentView = '24h';
+  document.getElementById('btn-24h').classList.add('active');
+  document.getElementById('btn-7d').classList.remove('active');
+  document.getElementById('date-picker').value = '';
+  document.getElementById('date-picker').classList.remove('active');
+  cargaGrafica();
+});
+
+document.getElementById('btn-7d').addEventListener('click', (e) => {
+  currentView = '7d';
+  document.getElementById('btn-7d').classList.add('active');
+  document.getElementById('btn-24h').classList.remove('active');
+  document.getElementById('date-picker').value = '';
+  document.getElementById('date-picker').classList.remove('active');
+  cargaGrafica();
+});
+
+document.getElementById('date-picker').addEventListener('change', (e) => {
+  if (e.target.value) {
+    currentView = 'custom';
+    customDateStr = e.target.value;
+    document.getElementById('date-picker').classList.add('active');
+    document.getElementById('btn-24h').classList.remove('active');
+    document.getElementById('btn-7d').classList.remove('active');
+    cargaGrafica();
+  }
+});
 
 async function carga() {
   try {
