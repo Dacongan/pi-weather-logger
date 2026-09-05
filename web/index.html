@@ -136,6 +136,20 @@
   }
   .stale { color: var(--accent) !important; }
 
+  .hero-split { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+  .hero-item { flex: 1; min-width: 130px; }
+  .hero-item .temp b { font-size: clamp(2.5rem, 12vw, 3.5rem); }
+  .hero-item + .hero-item { border-left: 1px solid var(--line); padding-left: 1.5rem; }
+  
+  @media (max-width: 380px) {
+    .hero-item + .hero-item { 
+      border-left: none; 
+      border-top: 1px solid var(--line); 
+      padding-left: 0; 
+      padding-top: 1.25rem; 
+    }
+  }
+
   .controls {
     display: flex;
     gap: 0.5rem;
@@ -172,15 +186,15 @@
   <div id="error">No hay datos todavía. El fichero <code>data/latest.json</code> no se ha podido leer.</div>
 
   <section id="panel" hidden>
-    <div class="hero" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-      <div>
+    <div class="hero hero-split">
+      <div class="hero-item">
         <p class="label">Temperatura</p>
-        <p class="temp"><b id="temp" style="font-size: clamp(2.5rem, 10vw, 3.5rem);">–</b><span>°C</span></p>
+        <p class="temp"><b id="temp">–</b><span>°C</span></p>
         <div class="sub-value" id="temp-minmax"></div>
       </div>
-      <div style="border-left: 1px solid var(--line); padding-left: 1rem;">
-        <p class="label">Sensación</p>
-        <p class="temp"><b id="heat-index-val" style="font-size: clamp(2.5rem, 10vw, 3.5rem);">–</b><span>°C</span></p>
+      <div class="hero-item">
+        <p class="label">Sensación Térmica</p>
+        <p class="temp"><b id="heat-index-val">–</b><span>°C</span></p>
         <div class="sub-value" id="heat-index-note">Fórmula AT</div>
       </div>
     </div>
@@ -229,24 +243,27 @@
       <div class="card">
         <p class="label">Bulbo Húmedo</p>
         <p class="value"><span id="wet-bulb">–</span><span class="unit"> °C</span></p>
-        <p class="sub-value" style="font-size: 0.75rem; margin-top: 0.5rem; line-height: 1.3;">Límite térmico del cuerpo humano para enfriarse sudando. Si sube de 35ºC es letal.</p>
       </div>
       <div class="card">
         <p class="label">Hum. Absoluta</p>
         <p class="value"><span id="abs-hum">–</span><span class="unit"> g/m³</span></p>
-        <p class="sub-value" style="font-size: 0.75rem; margin-top: 0.5rem; line-height: 1.3;">Gramos exactos de agua por cada metro cúbico de aire.</p>
       </div>
       <div class="card">
         <p class="label">VPD</p>
         <p class="value"><span id="vpd">–</span><span class="unit"> kPa</span></p>
-        <p class="sub-value" style="font-size: 0.75rem; margin-top: 0.5rem; line-height: 1.3;">Déficit de presión de vapor. Mide la "sed" del aire, usado en botánica.</p>
       </div>
       <div class="card">
         <p class="label">Pto. Ebullición</p>
         <p class="value"><span id="boil">–</span><span class="unit"> °C</span></p>
-        <p class="sub-value" style="font-size: 0.75rem; margin-top: 0.5rem; line-height: 1.3;">Temperatura exacta a la que hierve el agua hoy con tu presión atmosférica local.</p>
       </div>
     </div>
+    
+    <ul style="font-size: 0.8125rem; color: var(--muted); margin-top: 1rem; padding-left: 1.25rem; line-height: 1.5; margin-bottom: 2rem;">
+      <li><b>Bulbo Húmedo:</b> Límite térmico del cuerpo humano para enfriarse sudando. Si sube de 35ºC es letal porque el sudor deja de evaporarse.</li>
+      <li><b>Humedad Absoluta:</b> Peso físico (en gramos) de toda el agua que hay flotando ahora mismo por cada metro cúbico de aire.</li>
+      <li><b>VPD (Déficit de presión de vapor):</b> Mide la "sed" que tiene el aire. Es la métrica principal usada en invernaderos para saber cuándo regar.</li>
+      <li><b>Punto de Ebullición:</b> Temperatura exacta a la que herviría una olla de agua hoy en tu balcón, calculada según la presión atmosférica actual.</li>
+    </ul>
 
     <footer>
       <span>Última lectura: <span id="when">–</span></span>
