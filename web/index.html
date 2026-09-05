@@ -217,6 +217,12 @@
       <canvas id="presChart" style="width: 100%; max-height: 200px;"></canvas>
     </div>
 
+    <div class="card" style="margin-top: 0.75rem; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; font-size: 0.8125rem; color: var(--muted); padding: 0.75rem 1.25rem;">
+      <div><b>Bulbo Húmedo:</b> <span id="wet-bulb">–</span> °C</div>
+      <div><b>Hum. Absoluta:</b> <span id="abs-hum">–</span> g/m³</div>
+      <div><b>VPD:</b> <span id="vpd">–</span> kPa</div>
+    </div>
+
     <footer>
       <span>Última lectura: <span id="when">–</span></span>
       <span id="ago"></span>
@@ -323,6 +329,25 @@ function pinta(d) {
   // Sensación térmica
   const at = calcApparentTemp(d.temp_c, d.humidity_pct);
   document.getElementById("heat-index").textContent = `Sensación: ${at.toFixed(1)} °C`;
+
+  // Datos avanzados (Termodinámica)
+  const T = d.temp_c;
+  const RH = d.humidity_pct;
+  
+  const Psat = 6.112 * Math.exp((17.67 * T) / (T + 243.5)); // Presión saturación vapor
+  const Pactual = Psat * (RH / 100); // Presión vapor actual
+  
+  // Déficit Presión de Vapor (kPa)
+  const vpd = Math.max(0, (Psat - Pactual) / 10);
+  document.getElementById("vpd").textContent = vpd.toFixed(2);
+  
+  // Humedad Absoluta (g/m³)
+  const absHum = (2.16679 * Pactual * 100) / (T + 273.15);
+  document.getElementById("abs-hum").textContent = absHum.toFixed(1);
+  
+  // Temperatura Bulbo Húmedo (Aprox. de Stull)
+  const Twb = T * Math.atan(0.151977 * Math.sqrt(RH + 8.313659)) + Math.atan(T + RH) - Math.atan(RH - 1.676331) + 0.00391838 * Math.pow(RH, 1.5) * Math.atan(0.023101 * RH) - 4.686035;
+  document.getElementById("wet-bulb").textContent = Twb.toFixed(1);
 
   document.getElementById("when").textContent = fmtHora(d.timestamp);
 
