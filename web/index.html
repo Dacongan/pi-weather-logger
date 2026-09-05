@@ -90,10 +90,11 @@
   }
   .value {
     margin: 0;
-    font-size: 1.75rem;
+    font-size: 1.55rem;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
+    white-space: nowrap;
   }
   .unit { font-size: 1rem; color: var(--muted); font-weight: 500; }
 
@@ -258,11 +259,11 @@
       </div>
     </div>
     
-    <ul style="font-size: 0.8125rem; color: var(--muted); margin-top: 1rem; padding-left: 1.25rem; line-height: 1.5; margin-bottom: 2rem;">
-      <li><b>Bulbo Húmedo:</b> Límite térmico del cuerpo humano para enfriarse sudando. Si sube de 35ºC es letal porque el sudor deja de evaporarse.</li>
-      <li><b>Humedad Absoluta:</b> Peso físico (en gramos) de toda el agua que hay flotando ahora mismo por cada metro cúbico de aire.</li>
-      <li><b>VPD (Déficit de presión de vapor):</b> Mide la "sed" que tiene el aire. Es la métrica principal usada en invernaderos para saber cuándo regar.</li>
-      <li><b>Punto de Ebullición:</b> Temperatura exacta a la que herviría una olla de agua hoy en tu balcón, calculada según la presión atmosférica actual.</li>
+    <ul style="font-size: 0.8125rem; color: var(--muted); margin-top: 1rem; padding-left: 1.25rem; line-height: 1.6; margin-bottom: 2rem;">
+      <li style="margin-bottom: 0.5rem;"><b>Bulbo Húmedo (Wet-bulb):</b> Mide la temperatura más baja que puede alcanzar tu piel al sudar. Si el aire está muy húmedo, el sudor no se evapora y este valor sube. Si se mantiene bajo (ej. 20ºC), significa que tu cuerpo puede enfriarse perfectamente sudando. Si este valor alcanza los <b>35ºC</b>, el sudor humano deja de funcionar por completo; el cuerpo no puede enfriarse por debajo de sus 37ºC internos y provoca la muerte por golpe de calor en pocas horas, incluso a la sombra.</li>
+      <li style="margin-bottom: 0.5rem;"><b>Humedad Absoluta:</b> La humedad relativa (%) engaña porque depende del calor. Este dato te dice el peso físico exacto (en gramos) de toda el agua que hay flotando ahora mismo en cada metro cúbico de aire en tu ventana.</li>
+      <li style="margin-bottom: 0.5rem;"><b>VPD (Déficit de presión de vapor):</b> Mide literalmente la "sed" que tiene el aire. Es la métrica clave en botánica: si el VPD es muy alto, el aire roba agua rápidamente de las plantas y las seca. Si el VPD es muy bajo (cercano a 0), el aire ya está lleno de agua, por lo que las plantas no pueden transpirar ni absorber nutrientes por las raíces, frenando su crecimiento.</li>
+      <li><b>Punto de Ebullición del Agua:</b> Temperatura exacta a la que herviría una olla de agua en este preciso momento en tu casa. El agua no siempre hierve a 100ºC; depende de la presión atmosférica, y este sensor la usa para darte el punto de ebullición exacto de hoy.</li>
     </ul>
 
     <footer>
