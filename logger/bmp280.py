@@ -22,9 +22,12 @@ def read():
         dig_T = dig[0:3]
         dig_P = dig[3:12]
 
-        # Configure and start measurement
-        # ctrl_meas (0xF4): osrs_t(2)=010, osrs_p(5)=101, mode(2)=01
-        bus.write_byte_data(DIRECCION_BMP280, 0xF4, 0x27)
+        # Configure and trigger one measurement
+        # ctrl_meas (0xF4): osrs_t(3)=001 (x1), osrs_p(3)=001 (x1), mode(2)=01
+        # 0x25 = 0b00100101. Forced mode: measure once, then back to sleep.
+        # Normal mode (0x27) converted non-stop and warmed its own package
+        # inside the enclosure, millimetres away from the AHT20.
+        bus.write_byte_data(DIRECCION_BMP280, 0xF4, 0x25)
         
         # Wait for measurement to complete
         time.sleep(0.05)
