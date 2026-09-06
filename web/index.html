@@ -166,6 +166,23 @@
   }
   .stale { color: var(--accent) !important; }
 
+  #stale-banner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: baseline;
+    background: var(--card);
+    border: 1px solid var(--accent);
+    border-left: 4px solid var(--accent);
+    border-radius: 14px;
+    padding: 0.9rem 1.15rem;
+    margin-bottom: 0.75rem;
+    color: var(--accent);
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+  #stale-banner[hidden] { display: none; }
+
   .hero-split { display: flex; flex-wrap: wrap; gap: 1.5rem; }
   .hero-item { flex: 1 1 130px; min-width: 0; }
   .hero-item .temp b { font-size: clamp(2.5rem, 12vw, 3.5rem); }
@@ -217,6 +234,11 @@
   <div id="error">No hay datos todavía. El fichero <code>data/latest.json</code> no se ha podido leer.</div>
 
   <section id="panel" hidden>
+    <div id="stale-banner" hidden>
+      <span>⚠</span>
+      <span><b>Sin datos recientes.</b> <span id="stale-text"></span> La estación puede estar caída.</span>
+    </div>
+
     <div class="hero hero-split">
       <div class="hero-item">
         <p class="label">Temperatura</p>
@@ -379,7 +401,14 @@ function hace(iso) {
   if (min === 1) return "hace 1 minuto";
   if (min < 60) return `hace ${min} minutos`;
   const h = Math.round(min / 60);
-  return h === 1 ? "hace 1 hora" : `hace ${h} horas`;
+  if (h < 24) {
+    return h === 1 ? "hace 1 hora" : `hace ${h} horas`;
+  }
+  const dias = Math.round(h / 24);
+  if (dias === 1) {
+    return "hace 1 día";
+  }
+  return `hace ${dias} días`;
 }
 
 // ---------------------------------------------------------------------
@@ -589,6 +618,14 @@ function pinta(d) {
   ago.textContent = hace(d.timestamp);
   const minutos = (Date.now() - new Date(d.timestamp)) / 60000;
   ago.classList.toggle("stale", minutos > 20);
+
+  const banner = document.getElementById("stale-banner");
+  if (minutos > 45) {
+    document.getElementById("stale-text").textContent = `El último dato es de ${hace(d.timestamp)}.`;
+    banner.hidden = false;
+  } else {
+    banner.hidden = true;
+  }
 
   document.getElementById("panel").hidden = false;
   document.getElementById("error").style.display = "none";
