@@ -114,7 +114,7 @@
     background:var(--prussian);
     color:var(--paper);
     overflow:hidden;
-    padding:74px 0 78px;
+    padding:58px 0 60px;
   }
   .hero-grid{
     position:absolute;inset:0;
@@ -131,10 +131,11 @@
   .hero-eyebrow .label{color:var(--brass-light)}
   .hero-eyebrow .rule{height:1px;width:54px;background:var(--brass);opacity:.7}
   .hero h1{
-    font-size:clamp(2.3rem,6vw,4.1rem);
+    font-size:clamp(2.6rem,6vw,4.1rem);
     font-weight:600;
     max-width:16ch;
-    margin-bottom:20px;
+    margin-bottom:16px;
+    white-space:nowrap;
   }
   .hero h1 .accent{color:var(--brass-light)}
   .hero-sub{
@@ -145,15 +146,17 @@
   .hero-meta{
     font-family:'IBM Plex Mono',monospace;
     font-size:.8rem;color:rgba(244,245,243,.6);
-    display:flex;flex-wrap:wrap;gap:8px 20px;margin:26px 0 0;
+    display:flex;flex-wrap:wrap;gap:8px 20px;margin:22px 0 0;
   }
   .hero-meta span{display:flex;align-items:center;gap:8px}
-  .hero-meta span::before{content:"";width:6px;height:6px;background:var(--brass);transform:rotate(45deg);flex:none}
+  .hero-meta span[hidden]{display:none}
+  .hero-meta span span::before{content:none}
+  .hero-meta > span::before{content:"";width:6px;height:6px;background:var(--brass);transform:rotate(45deg);flex:none}
 
   /* lectura grande dentro del hero */
   .readout{
     display:flex;flex-wrap:wrap;gap:34px 56px;
-    margin-top:40px;padding-top:32px;
+    margin-top:30px;padding-top:26px;
     border-top:1px solid rgba(244,245,243,.18);
   }
   .readout-item{min-width:0}
@@ -288,9 +291,9 @@
   footer a:hover{text-decoration:underline}
 
   @media (max-width:640px){
-    .hero{padding:56px 0 60px}
+    .hero{padding:44px 0 48px}
     section{padding:46px 0}
-    .readout{gap:26px 34px;margin-top:32px;padding-top:26px}
+    .readout{gap:24px 32px;margin-top:24px;padding-top:22px}
   }
 </style>
 <script>
@@ -335,18 +338,21 @@
         <span class="label">Torre-Pacheco</span>
       </div>
 
-      <h1>Del aire al <span class="accent">punto de rocío</span></h1>
+      <h1>Weather<span class="accent">Pi</span></h1>
 
       <p class="hero-sub">
-        Un AHT20 y un BMP280 colgados de una Raspberry Pi de 2012, en una garita
-        impresa en 3D. Miden cada 15 minutos y publican solos. Nadie toca nada.
+        Temperatura, humedad y presión medidas cada 15 minutos por dos sensores
+        alojados en una garita impresa en 3D, y publicadas aquí automáticamente
+        desde una Raspberry Pi.
       </p>
 
       <div class="hero-meta">
         <span>AHT20 · BMP280</span>
-        <span>I²C · bus 1</span>
-        <span>Raspberry Pi Model B</span>
-        <span>cada 15 min</span>
+        <span>Raspberry Pi Model B · I²C</span>
+        <span>Actualiza cada 15 min</span>
+        <span>Última lectura <span id="meta-last">–</span></span>
+        <span>Próxima <span id="meta-next">–</span></span>
+        <span id="meta-today-wrap" hidden><span id="meta-today"></span></span>
       </div>
 
       <div class="readout">
@@ -545,6 +551,20 @@ let currentPressureHpa = 0;
 function fmtHora(iso) {
   const d = new Date(iso);
   return d.toLocaleString("es-ES", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+// El timer de systemd dispara a :00, :15, :30 y :45, asi que la siguiente
+// lectura cae 15 min despues de la ultima.
+function proxima(iso) {
+  const t = new Date(iso).getTime() + 15 * 60000;
+  const min = Math.round((t - Date.now()) / 60000);
+  if (min <= 0) {
+    return "en breve";
+  }
+  if (min === 1) {
+    return "en 1 min";
+  }
+  return `en ${min} min`;
 }
 
 function hace(iso) {
@@ -765,6 +785,8 @@ function pinta(d) {
   setVal("boil", fBoil(currentPressureHpa), propagate(fBoil, [currentPressureHpa], [SIGMA_P]), 2);
 
   document.getElementById("when").textContent = fmtHora(d.timestamp);
+  document.getElementById("meta-last").textContent = hace(d.timestamp);
+  document.getElementById("meta-next").textContent = proxima(d.timestamp);
 
   const ago = document.getElementById("ago");
   ago.textContent = hace(d.timestamp);
@@ -852,6 +874,23 @@ async function cargaGrafica() {
         press.push(aNivelDelMar(p));
       }
     }
+  }
+
+  // Cuantas lecturas van hoy. rawDates ya viene filtrado por la vista, asi
+  // que en 24h y 7d sale bien; en una fecha suelta del pasado se oculta.
+  const hoyStr = new Date().toISOString().split('T')[0];
+  let hoyN = 0;
+  for (const f of rawDates) {
+    if (f.toISOString().split('T')[0] === hoyStr) {
+      hoyN += 1;
+    }
+  }
+  const envoltorio = document.getElementById("meta-today-wrap");
+  if (hoyN > 0) {
+    document.getElementById("meta-today").textContent = `${hoyN} lecturas hoy`;
+    envoltorio.hidden = false;
+  } else {
+    envoltorio.hidden = true;
   }
 
   // Max / Min
