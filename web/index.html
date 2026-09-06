@@ -72,14 +72,20 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
+  }
+  @media (max-width: 420px) {
+    .grid { grid-template-columns: 1fr; }
   }
   .card {
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: 14px;
     padding: 1.1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
   }
   .label {
     margin: 0 0 0.35rem;
@@ -87,6 +93,7 @@
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--muted);
+    min-height: 2.4em;
   }
   .value {
     margin: 0;
@@ -98,16 +105,26 @@
   }
   .unit { font-size: 1rem; color: var(--muted); font-weight: 500; }
   .tol {
-    font-size: 0.8rem;
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.8125rem;
     color: var(--muted);
     font-weight: 500;
     letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
-  .temp .tol { font-size: 0.95rem; align-self: center; }
+  .temp .tol {
+    display: inline;
+    margin-top: 0;
+    font-size: 0.95rem;
+    align-self: center;
+  }
 
   .margin-note {
-    margin: 0.4rem 0 0;
+    margin: 0;
+    padding-top: 0.5rem;
+    margin-top: auto;
     font-size: 0.8125rem;
     color: var(--muted);
   }
@@ -117,8 +134,10 @@
   .sub-value {
     font-size: 0.85rem;
     color: var(--muted);
-    margin-top: 0.25rem;
+    padding-top: 0.5rem;
+    margin-top: auto;
   }
+  .hero-item .sub-value { margin-top: 0.25rem; padding-top: 0; }
   .pointer { cursor: pointer; user-select: none; }
 
   footer {
@@ -212,22 +231,22 @@
     <div class="grid">
       <div class="card">
         <p class="label">Humedad relativa</p>
-        <p class="value"><span id="hum">–</span><span class="tol" id="hum-tol"></span><span class="unit"> %</span></p>
+        <p class="value"><span id="hum">–</span><span class="unit"> %</span><span class="tol" id="hum-tol"></span></p>
         <div class="sub-value">Saturación del aire</div>
       </div>
       <div class="card pointer" id="pres-card" title="Click para cambiar unidad">
         <p class="label">Presión atmosférica</p>
-        <p class="value"><span id="pres">–</span><span class="tol" id="pres-tol"></span><span class="unit" id="pres-unit"> hPa</span></p>
+        <p class="value"><span id="pres">–</span><span class="unit" id="pres-unit"> hPa</span><span class="tol" id="pres-tol"></span></p>
         <div class="sub-value" id="pressure-trend"></div>
       </div>
       <div class="card">
         <p class="label">Punto de rocío</p>
-        <p class="value"><span id="dew">–</span><span class="tol" id="dew-tol"></span><span class="unit"> °C</span></p>
+        <p class="value"><span id="dew">–</span><span class="unit"> °C</span><span class="tol" id="dew-tol"></span></p>
         <p class="margin-note" id="margin"></p>
       </div>
       <div class="card">
         <p class="label">Base de nubes</p>
-        <p class="value"><span id="clouds">–</span><span class="tol" id="clouds-tol"></span><span class="unit"> m</span></p>
+        <p class="value"><span id="clouds">–</span><span class="unit"> m</span><span class="tol" id="clouds-tol"></span></p>
         <p class="sub-value">Altura aprox. de condensación</p>
       </div>
     </div>
@@ -252,19 +271,19 @@
     <div class="grid">
       <div class="card">
         <p class="label">Bulbo Húmedo</p>
-        <p class="value"><span id="wet-bulb">–</span><span class="tol" id="wet-bulb-tol"></span><span class="unit"> °C</span></p>
+        <p class="value"><span id="wet-bulb">–</span><span class="unit"> °C</span><span class="tol" id="wet-bulb-tol"></span></p>
       </div>
       <div class="card">
         <p class="label">Hum. Absoluta</p>
-        <p class="value"><span id="abs-hum">–</span><span class="tol" id="abs-hum-tol"></span><span class="unit"> g/m³</span></p>
+        <p class="value"><span id="abs-hum">–</span><span class="unit"> g/m³</span><span class="tol" id="abs-hum-tol"></span></p>
       </div>
       <div class="card">
         <p class="label">VPD</p>
-        <p class="value"><span id="vpd">–</span><span class="tol" id="vpd-tol"></span><span class="unit"> kPa</span></p>
+        <p class="value"><span id="vpd">–</span><span class="unit"> kPa</span><span class="tol" id="vpd-tol"></span></p>
       </div>
       <div class="card">
         <p class="label">Pto. Ebullición</p>
-        <p class="value"><span id="boil">–</span><span class="tol" id="boil-tol"></span><span class="unit"> °C</span></p>
+        <p class="value"><span id="boil">–</span><span class="unit"> °C</span><span class="tol" id="boil-tol"></span></p>
       </div>
     </div>
     
