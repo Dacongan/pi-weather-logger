@@ -97,6 +97,14 @@
     white-space: nowrap;
   }
   .unit { font-size: 1rem; color: var(--muted); font-weight: 500; }
+  .tol {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+  .temp .tol { font-size: 0.95rem; align-self: center; }
 
   .margin-note {
     margin: 0.4rem 0 0;
@@ -175,7 +183,7 @@
     border-color: var(--ink);
   }
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
@@ -191,12 +199,12 @@
     <div class="hero hero-split">
       <div class="hero-item">
         <p class="label">Temperatura</p>
-        <p class="temp"><b id="temp">–</b><span>°C</span></p>
+        <p class="temp"><b id="temp">–</b><span>°C</span><span class="tol" id="temp-tol"></span></p>
         <div class="sub-value" id="temp-minmax"></div>
       </div>
       <div class="hero-item">
         <p class="label">Sensación Térmica</p>
-        <p class="temp"><b id="heat-index-val">–</b><span>°C</span></p>
+        <p class="temp"><b id="heat-index-val">–</b><span>°C</span><span class="tol" id="heat-index-val-tol"></span></p>
         <div class="sub-value" id="heat-index-note">Fórmula AT</div>
       </div>
     </div>
@@ -204,22 +212,22 @@
     <div class="grid">
       <div class="card">
         <p class="label">Humedad relativa</p>
-        <p class="value"><span id="hum">–</span><span class="unit"> %</span></p>
+        <p class="value"><span id="hum">–</span><span class="tol" id="hum-tol"></span><span class="unit"> %</span></p>
         <div class="sub-value">Saturación del aire</div>
       </div>
       <div class="card pointer" id="pres-card" title="Click para cambiar unidad">
-        <p class="label">Presión atmosfèrica</p>
-        <p class="value"><span id="pres">–</span><span class="unit" id="pres-unit"> hPa</span></p>
+        <p class="label">Presión atmosférica</p>
+        <p class="value"><span id="pres">–</span><span class="tol" id="pres-tol"></span><span class="unit" id="pres-unit"> hPa</span></p>
         <div class="sub-value" id="pressure-trend"></div>
       </div>
       <div class="card">
         <p class="label">Punto de rocío</p>
-        <p class="value"><span id="dew">–</span><span class="unit"> °C</span></p>
+        <p class="value"><span id="dew">–</span><span class="tol" id="dew-tol"></span><span class="unit"> °C</span></p>
         <p class="margin-note" id="margin"></p>
       </div>
       <div class="card">
         <p class="label">Base de nubes</p>
-        <p class="value"><span id="clouds">–</span><span class="unit"> m</span></p>
+        <p class="value"><span id="clouds">–</span><span class="tol" id="clouds-tol"></span><span class="unit"> m</span></p>
         <p class="sub-value">Altura aprox. de condensación</p>
       </div>
     </div>
@@ -244,19 +252,19 @@
     <div class="grid">
       <div class="card">
         <p class="label">Bulbo Húmedo</p>
-        <p class="value"><span id="wet-bulb">–</span><span class="unit"> °C</span></p>
+        <p class="value"><span id="wet-bulb">–</span><span class="tol" id="wet-bulb-tol"></span><span class="unit"> °C</span></p>
       </div>
       <div class="card">
         <p class="label">Hum. Absoluta</p>
-        <p class="value"><span id="abs-hum">–</span><span class="unit"> g/m³</span></p>
+        <p class="value"><span id="abs-hum">–</span><span class="tol" id="abs-hum-tol"></span><span class="unit"> g/m³</span></p>
       </div>
       <div class="card">
         <p class="label">VPD</p>
-        <p class="value"><span id="vpd">–</span><span class="unit"> kPa</span></p>
+        <p class="value"><span id="vpd">–</span><span class="tol" id="vpd-tol"></span><span class="unit"> kPa</span></p>
       </div>
       <div class="card">
         <p class="label">Pto. Ebullición</p>
-        <p class="value"><span id="boil">–</span><span class="unit"> °C</span></p>
+        <p class="value"><span id="boil">–</span><span class="tol" id="boil-tol"></span><span class="unit"> °C</span></p>
       </div>
     </div>
     
@@ -295,6 +303,15 @@
         <h3 style="color: var(--ink); margin-top: 1.5rem; font-size: 0.9rem;">5. Sensación Térmica (Apparent Temperature)</h3>
         <p style="text-align: center;">$$AT = T + 0.33 \cdot e_a - 4.00$$</p>
         <p><b>Por qué:</b> Implementación del estándar meteorológico de la <i>Australian Bureau of Meteorology (BOM)</i>. El coeficiente \(0.33\) modela matemáticamente la penalización de la humedad en la capacidad de la piel para disipar calor metabólico latente, mientras que \(-4.00\) normaliza la ecuación para un humano en condiciones estándar de viento calmado.</p>
+
+        <h3 style="color: var(--ink); margin-top: 1.5rem; font-size: 0.9rem;">6. Incertidumbre de medida</h3>
+        <p>Cada cifra de la página lleva su <b>±</b>. No es un adorno: es el error de instrumentación de los sensores, tomado de sus hojas de características.</p>
+        <p style="text-align: center;">$$\sigma_T = \pm 0.3\,^\circ C \quad \sigma_{RH} = \pm 2\,\% \quad \sigma_P = \pm 1.0\,hPa$$</p>
+        <p>Para las magnitudes derivadas el error no se puede copiar del datasheet, porque ahí no está. Se propaga desde esos tres números con la fórmula general de propagación de incertidumbres, suponiendo los errores independientes:</p>
+        <p style="text-align: center;">$$\sigma_f = \sqrt{\sum_i \left(\frac{\partial f}{\partial x_i}\right)^2 \sigma_{x_i}^2}$$</p>
+        <p><b>Por qué:</b> las derivadas parciales se evalúan <i>numéricamente</i> por diferencias centradas, no a mano. Escribir a mano la derivada de la aproximación de Stull respecto a la humedad es una fuente de erratas silenciosas; con diferencias centradas la misma función de veinte líneas sirve para calcular el valor y su error, y no pueden desincronizarse.</p>
+        <p>Esto hace visible algo que un número pelado esconde: la incertidumbre <b>no es constante</b>. El punto de rocío va de ±0.43 °C con aire húmedo y frío a ±0.82 °C con aire seco y caliente, porque la sensibilidad de la fórmula de Magnus a la humedad crece cuando el aire se seca. Y la base de nubes cerca de la saturación llega a ±40 % de su propio valor: es una estimación, y ahora se ve que lo es.</p>
+        <p>Un matiz sobre la presión: el BMP280 tiene ±1.0 hPa de error <i>absoluto</i> pero solo ±0.12 hPa de error <i>relativo</i>. El absoluto es un desplazamiento fijo, así que se cancela al restar dos medidas. Por eso la tendencia de 3 h detecta cambios de ±0.5 hPa con fiabilidad aunque el valor absoluto tenga un error del doble.</p>
       </div>
     </details>
 
@@ -307,6 +324,22 @@
 
 <script>
 const RUTA = "../data/latest.json";
+
+// ---------------------------------------------------------------------
+// Incertidumbre de instrumentación — valores típicos de datasheet.
+//   AHT20   ±0.3 °C   y  ±2 %HR
+//   BMP280  ±1.0 hPa absoluto,  ±0.12 hPa relativo
+// El error de todo lo derivado (rocío, bulbo húmedo, base de nubes...)
+// no se inventa: se propaga desde estos tres números por suma en
+// cuadratura. Ver la sección 6 de "Fórmulas y Base Matemática".
+// ---------------------------------------------------------------------
+const SIGMA_T = 0.3;
+const SIGMA_RH = 2.0;
+const SIGMA_P = 1.0;
+
+// Altitud de la estación, para reducir la presión a nivel del mar.
+const ALTITUD_M = 40;
+const METROS_POR_HPA = 8.3;
 
 // State
 let currentView = '24h'; // '24h', '7d', 'custom'
@@ -328,26 +361,151 @@ function hace(iso) {
   return h === 1 ? "hace 1 hora" : `hace ${h} horas`;
 }
 
-// Fórmulas
-function calcApparentTemp(ta, rh) {
-  const e = (rh / 100) * 6.105 * Math.exp((17.27 * ta) / (237.7 + ta));
-  return ta + 0.33 * e - 4.00;
+// ---------------------------------------------------------------------
+// Fórmulas puras.  T en °C, RH en %, P en hPa.
+// Puras a propósito: propagate() las evalúa varias veces con las
+// entradas perturbadas, así que no pueden tocar el DOM ni guardar estado.
+// ---------------------------------------------------------------------
+function esMagnus(T) {
+  return 6.112 * Math.exp((17.67 * T) / (T + 243.5));
 }
 
-function analyzePressure(pressData, timesData) {
-  const now = new Date();
-  const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
-  
-  let oldP = null;
-  let newP = pressData[pressData.length - 1];
-  for (let i = timesData.length - 1; i >= 0; i--) {
-    if (timesData[i] <= threeHoursAgo) {
-      oldP = pressData[i];
+function eaMagnus(T, RH) {
+  return esMagnus(T) * (RH / 100);
+}
+
+function fDew(T, RH) {
+  const a = 17.62, b = 243.12;
+  let rh = RH;
+  if (rh > 100) {
+    rh = 100;
+  }
+  if (rh <= 0) {
+    rh = 0.01;
+  }
+  const gamma = Math.log(rh / 100) + (a * T) / (b + T);
+  return (b * gamma) / (a - gamma);
+}
+
+function fMargen(T, RH) {
+  return T - fDew(T, RH);
+}
+
+function fCloudBase(T, RH) {
+  const margen = fMargen(T, RH);
+  if (margen < 0) {
+    return 0;
+  }
+  return margen * 122;
+}
+
+function fWetBulb(T, RH) {
+  return T * Math.atan(0.151977 * Math.sqrt(RH + 8.313659))
+       + Math.atan(T + RH)
+       - Math.atan(RH - 1.676331)
+       + 0.00391838 * Math.pow(RH, 1.5) * Math.atan(0.023101 * RH)
+       - 4.686035;
+}
+
+function fAbsHum(T, RH) {
+  return (2.16679 * eaMagnus(T, RH) * 100) / (T + 273.15);
+}
+
+function fVpd(T, RH) {
+  const d = (esMagnus(T) - eaMagnus(T, RH)) / 10;
+  if (d < 0) {
+    return 0;
+  }
+  return d;
+}
+
+function fApparent(T, RH) {
+  const e = (RH / 100) * 6.105 * Math.exp((17.27 * T) / (237.7 + T));
+  return T + 0.33 * e - 4.00;
+}
+
+function fBoil(P) {
+  return (1730.63 / (8.07131 - Math.log10(P * 0.750062))) - 233.426;
+}
+
+// ---------------------------------------------------------------------
+// Propagación de incertidumbre.
+// Deriva f numéricamente respecto a cada entrada y suma en cuadratura.
+// Genérico: sirve para cualquier fórmula sin escribir su derivada a mano.
+// ---------------------------------------------------------------------
+function propagate(f, args, sigmas) {
+  const h = 1e-4;
+  let suma = 0;
+  for (let i = 0; i < args.length; i++) {
+    const arriba = args.slice();
+    const abajo = args.slice();
+    arriba[i] += h;
+    abajo[i] -= h;
+    const derivada = (f(...arriba) - f(...abajo)) / (2 * h);
+    const termino = derivada * sigmas[i];
+    suma += termino * termino;
+  }
+  return Math.sqrt(suma);
+}
+
+// Escribe valor y tolerancia en la tarjeta con id dado.
+function setVal(id, valor, tol, dec) {
+  document.getElementById(id).textContent = valor.toFixed(dec);
+  const t = document.getElementById(id + "-tol");
+  if (t) {
+    t.textContent = ` ±${tol.toFixed(dec)}`;
+  }
+}
+
+// ---------------------------------------------------------------------
+// Presión.  Regla de oro: en memoria SIEMPRE hPa reducidos a nivel del
+// mar.  La conversión de unidad ocurre solo al pintar.  Antes la tarjeta
+// corregía y la gráfica no, así que mostraban números distintos del
+// mismo dato, y los umbrales de tendencia se comparaban contra mmHg.
+// ---------------------------------------------------------------------
+function aNivelDelMar(pHpa) {
+  return pHpa + (ALTITUD_M / METROS_POR_HPA);
+}
+
+function convPres(pHpa) {
+  if (pressureUnit === 'mmHg') {
+    return pHpa * 0.750062;
+  }
+  if (pressureUnit === 'atm') {
+    return pHpa / 1013.25;
+  }
+  return pHpa;
+}
+
+function decPres() {
+  if (pressureUnit === 'atm') {
+    return 3;
+  }
+  return 1;
+}
+
+// Recibe SIEMPRE hPa a nivel del mar, y las fechas alineadas 1 a 1.
+function analyzePressure(pressHpa, timesData) {
+  const limite = new Date(Date.now() - 3 * 60 * 60 * 1000);
+
+  let newP = null;
+  for (let i = pressHpa.length - 1; i >= 0; i--) {
+    if (pressHpa[i] !== null) {
+      newP = pressHpa[i];
       break;
     }
   }
-  
-  if (oldP === null || newP === undefined) return "Recopilando tendencia...";
+
+  let oldP = null;
+  for (let i = timesData.length - 1; i >= 0; i--) {
+    if (timesData[i] <= limite && pressHpa[i] !== null) {
+      oldP = pressHpa[i];
+      break;
+    }
+  }
+
+  if (oldP === null || newP === null) return "Recopilando tendencia...";
+
   const diff = newP - oldP;
   if (diff <= -2) return "↓ Bajando rápido 🌧 (Lluvia)";
   if (diff <= -0.5) return "↘ Bajando ☁️ (Empeorando)";
@@ -357,22 +515,10 @@ function analyzePressure(pressData, timesData) {
 }
 
 function renderPressure() {
-  let p = currentPressureHpa;
-  
-  // Ajuste a Nivel del Mar (Torre-Pacheco ~40m, a 15ºC promedio la corrección es ~4.7 hPa)
-  // Fórmula simplificada: 1 hPa por cada 8.3m
-  p = p + (40 / 8.3); 
-
-  let u = 'hPa';
-  if (pressureUnit === 'mmHg') {
-    p = p * 0.750062;
-    u = 'mmHg';
-  } else if (pressureUnit === 'atm') {
-    p = p / 1013.25;
-    u = 'atm';
-  }
-  document.getElementById("pres").textContent = (pressureUnit === 'atm') ? p.toFixed(3) : p.toFixed(1);
-  document.getElementById("pres-unit").textContent = ' ' + u;
+  const pSea = aNivelDelMar(currentPressureHpa);
+  const d = decPres();
+  setVal("pres", convPres(pSea), convPres(SIGMA_P), d);
+  document.getElementById("pres-unit").textContent = ' ' + pressureUnit;
 }
 
 document.getElementById('pres-card').addEventListener('click', () => {
@@ -384,52 +530,37 @@ document.getElementById('pres-card').addEventListener('click', () => {
 });
 
 function pinta(d) {
-  document.getElementById("temp").textContent = d.temp_c.toFixed(1);
-  document.getElementById("hum").textContent  = d.humidity_pct.toFixed(1);
+  const T = d.temp_c;
+  const RH = d.humidity_pct;
+  const sig = [SIGMA_T, SIGMA_RH];
+
+  setVal("temp", T, SIGMA_T, 1);
+  setVal("hum", RH, SIGMA_RH, 1);
+
   if (d.pressure_hpa !== undefined) {
     currentPressureHpa = d.pressure_hpa;
     renderPressure();
   }
-  document.getElementById("dew").textContent  = d.dew_point_c.toFixed(1);
 
-  const margen = d.temp_c - d.dew_point_c;
+  // El punto de rocío se recalcula aquí en vez de usar d.dew_point_c para
+  // poder propagarle el error; el valor coincide con el que guarda la Pi.
+  setVal("dew", fDew(T, RH), propagate(fDew, [T, RH], sig), 1);
+
+  const margen = fMargen(T, RH);
+  const margenTol = propagate(fMargen, [T, RH], sig);
   const nota = document.getElementById("margin");
-  nota.textContent = `${margen.toFixed(1)} °C por debajo del aire`;
+  nota.textContent = `${margen.toFixed(1)} ±${margenTol.toFixed(1)} °C por debajo del aire`;
   nota.className = "margin-note " + (margen < 2 ? "warn" : "good");
 
-  // Base de nubes (Cloud Base) - Fórmula: (T - Td) * 122 metros
-  const cloudBase = Math.max(0, margen * 122);
-  document.getElementById("clouds").textContent = cloudBase.toFixed(0);
+  setVal("clouds", fCloudBase(T, RH), propagate(fCloudBase, [T, RH], sig), 0);
+  setVal("heat-index-val", fApparent(T, RH), propagate(fApparent, [T, RH], sig), 1);
+  setVal("wet-bulb", fWetBulb(T, RH), propagate(fWetBulb, [T, RH], sig), 1);
+  setVal("abs-hum", fAbsHum(T, RH), propagate(fAbsHum, [T, RH], sig), 1);
+  setVal("vpd", fVpd(T, RH), propagate(fVpd, [T, RH], sig), 2);
 
-  // Sensación térmica
-  const at = calcApparentTemp(d.temp_c, d.humidity_pct);
-  document.getElementById("heat-index-val").textContent = at.toFixed(1);
-
-  // Datos avanzados (Termodinámica)
-  const T = d.temp_c;
-  const RH = d.humidity_pct;
-  
-  const Psat = 6.112 * Math.exp((17.67 * T) / (T + 243.5)); // Presión saturación vapor
-  const Pactual = Psat * (RH / 100); // Presión vapor actual
-  
-  // Déficit Presión de Vapor (kPa)
-  const vpd = Math.max(0, (Psat - Pactual) / 10);
-  document.getElementById("vpd").textContent = vpd.toFixed(2);
-  
-  // Humedad Absoluta (g/m³)
-  const absHum = (2.16679 * Pactual * 100) / (T + 273.15);
-  document.getElementById("abs-hum").textContent = absHum.toFixed(1);
-  
-  // Temperatura Bulbo Húmedo (Aprox. de Stull)
-  const Twb = T * Math.atan(0.151977 * Math.sqrt(RH + 8.313659)) + Math.atan(T + RH) - Math.atan(RH - 1.676331) + 0.00391838 * Math.pow(RH, 1.5) * Math.atan(0.023101 * RH) - 4.686035;
-  document.getElementById("wet-bulb").textContent = Twb.toFixed(1);
-
-  // Punto de ebullición del agua (Ecuación de Antoine)
-  // Presión base local bruta
-  const P_hpa = currentPressureHpa; 
-  const P_mmHg = P_hpa * 0.750062;
-  const boilTemp = (1730.63 / (8.07131 - Math.log10(P_mmHg))) - 233.426;
-  document.getElementById("boil").textContent = boilTemp.toFixed(2);
+  // La ebullición depende de la presión de estación real, no de la
+  // reducida a nivel del mar: el agua hierve donde está la olla.
+  setVal("boil", fBoil(currentPressureHpa), propagate(fBoil, [currentPressureHpa], [SIGMA_P]), 2);
 
   document.getElementById("when").textContent = fmtHora(d.timestamp);
 
@@ -482,30 +613,33 @@ async function cargaGrafica() {
   }
 
   const times = [], rawDates = [], temps = [], hums = [], press = [], dews = [];
-  
+
   for (const line of allLines) {
     const cols = line.split(',');
     if (cols.length >= 5) {
       const d = new Date(cols[0]);
       if (filterDate && d < filterDate) continue;
-      
+
       rawDates.push(d);
       if (currentView === '24h') {
         times.push(d.toLocaleTimeString("es-ES", {hour: "2-digit", minute: "2-digit"}));
       } else {
         times.push(d.toLocaleTimeString("es-ES", {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"}));
       }
-      
+
       temps.push(parseFloat(cols[1]));
       hums.push(parseFloat(cols[2]));
-      
-      let p = parseFloat(cols[3]);
-      if (!isNaN(p)) {
-        if (pressureUnit === 'mmHg') p = p * 0.750062;
-        else if (pressureUnit === 'atm') p = p / 1013.25;
-        press.push(p);
-      }
       dews.push(parseFloat(cols[4]));
+
+      // push incondicional: si falta la presión entra null, no se salta.
+      // Saltarla desalineaba press[] respecto a rawDates[] y la tendencia
+      // acababa comparando una presión con la hora de otra muestra.
+      const p = parseFloat(cols[3]);
+      if (isNaN(p)) {
+        press.push(null);
+      } else {
+        press.push(aNivelDelMar(p));
+      }
     }
   }
 
@@ -526,18 +660,18 @@ async function cargaGrafica() {
   const colorAccent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
   const colorCold = getComputedStyle(document.documentElement).getPropertyValue('--cold').trim();
   const colorOk = getComputedStyle(document.documentElement).getPropertyValue('--ok').trim();
-  
+
   Chart.defaults.color = colorInk;
   Chart.defaults.font.family = 'system-ui, sans-serif';
-  
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
     interaction: { mode: 'index', intersect: false },
     plugins: { legend: { position: 'top', labels: { boxWidth: 12, usePointStyle: true } }, tooltip: { enabled: true } },
     scales: {
-      x: { grid: { color: colorLine, drawBorder: false }, ticks: { maxTicksLimit: (currentView==='7d'? 14 : 6) } },
-      y: { grid: { color: colorLine, drawBorder: false } }
+      x: { grid: { color: colorLine }, border: { display: false }, ticks: { maxTicksLimit: (currentView==='7d'? 14 : 6) } },
+      y: { grid: { color: colorLine }, border: { display: false } }
     },
     animation: { duration: 0 } // faster redraws
   };
@@ -569,11 +703,13 @@ async function cargaGrafica() {
 
   if (presChart) { presChart.destroy(); }
   const ctxPres = document.getElementById('presChart').getContext('2d');
+  // press[] vive en hPa; se convierte aquí, igual que hace la tarjeta.
+  const presVista = press.map(v => (v === null ? null : convPres(v)));
   presChart = new Chart(ctxPres, {
     type: 'line',
     data: {
       labels: times,
-      datasets: [{ label: `Presión (${pressureUnit})`, data: press, borderColor: colorOk, backgroundColor: colorOk, tension: 0.3, pointRadius: 0, borderWidth: 2 }]
+      datasets: [{ label: `Presión (${pressureUnit})`, data: presVista, borderColor: colorOk, backgroundColor: colorOk, tension: 0.3, pointRadius: 0, borderWidth: 2 }]
     },
     options: chartOptions
   });
