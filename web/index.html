@@ -59,8 +59,10 @@
   .temp {
     display: flex;
     align-items: baseline;
+    flex-wrap: wrap;
     gap: 0.35rem;
     font-variant-numeric: tabular-nums;
+    min-width: 0;
   }
   .temp b {
     font-size: clamp(3rem, 14vw, 4.5rem);
@@ -97,7 +99,7 @@
   }
   .value {
     margin: 0;
-    font-size: 1.55rem;
+    font-size: clamp(1.25rem, 5.2vw, 1.55rem);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
@@ -165,16 +167,16 @@
   .stale { color: var(--accent) !important; }
 
   .hero-split { display: flex; flex-wrap: wrap; gap: 1.5rem; }
-  .hero-item { flex: 1; min-width: 130px; }
+  .hero-item { flex: 1 1 130px; min-width: 0; }
   .hero-item .temp b { font-size: clamp(2.5rem, 12vw, 3.5rem); }
   .hero-item + .hero-item { border-left: 1px solid var(--line); padding-left: 1.5rem; }
   
-  @media (max-width: 380px) {
-    .hero-item + .hero-item { 
-      border-left: none; 
-      border-top: 1px solid var(--line); 
-      padding-left: 0; 
-      padding-top: 1.25rem; 
+  @media (max-width: 480px) {
+    .hero-item + .hero-item {
+      border-left: none;
+      border-top: 1px solid var(--line);
+      padding-left: 0;
+      padding-top: 1.25rem;
     }
   }
 
