@@ -1,0 +1,10 @@
+[Unit]
+Description=WeatherPi data watchdog
+# curl necesita red de verdad, no solo que el gestor de red haya arrancado
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=david
+ExecStart=/home/david/pi-weather-logger/logger/watchdog.sh

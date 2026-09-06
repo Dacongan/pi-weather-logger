@@ -1,0 +1,12 @@
+[Unit]
+Description=Check every 15 min that the logger is still writing
+
+[Timer]
+OnBootSec=5min
+# Desfasado 7 min respecto a logger.timer (*:0/15) para no mirar el fichero
+# justo mientras el logger lo esta reescribiendo.
+OnCalendar=*:7/15
+Persistent=true
+
+[Install]
+WantedBy=timers.target
