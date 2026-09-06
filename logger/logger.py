@@ -7,6 +7,7 @@ Una sola pasada: lee, calcula, escribe y termina. De repetirla cada
 import json
 import csv
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -74,8 +75,25 @@ def main():
             subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=REPO_DIR, check=True, capture_output=True)
             subprocess.run(["git", "push", "origin", "main"], cwd=REPO_DIR, check=True, capture_output=True)
             print("Datos subidos a GitHub correctamente.")
+    except subprocess.CalledProcessError as e:
+        # capture_output=True se traga el stderr de git. Sin desempaquetarlo
+        # el mensaje es solo "returned non-zero exit status 1", que no dice
+        # nada: el motivo real (un rebase en conflicto, la clave, la red)
+        # viaja en e.stderr.
+        if e.stderr:
+            detalle = e.stderr.decode(errors="replace").strip()
+        else:
+            detalle = "(git no escribió nada en stderr)"
+        print(f"No se pudo subir a GitHub: {' '.join(e.cmd)}")
+        print(detalle)
+        # Los datos ya están escritos en disco antes de este bloque, así que
+        # salir con error no pierde la muestra. Sirve para que systemd marque
+        # el servicio como fallido: sin esto termina en éxito y el fallo pasa
+        # desapercibido durante días.
+        sys.exit(1)
     except Exception as e:
         print(f"No se pudo subir a GitHub: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
