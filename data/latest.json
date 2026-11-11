@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-11-11T15:00:10.477969+00:00",
-  "temp_c": 21.43,
-  "humidity_pct": 79.64,
-  "pressure_hpa": 1002.36,
-  "dew_point_c": 17.76
+  "timestamp": "2026-11-11T15:15:10.466523+00:00",
+  "temp_c": 21.48,
+  "humidity_pct": 79.23,
+  "pressure_hpa": 1002.05,
+  "dew_point_c": 17.73
 }
